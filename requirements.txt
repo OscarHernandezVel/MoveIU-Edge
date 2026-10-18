@@ -1,0 +1,5 @@
+# Agente a bordo (Raspberry Pi OS 64 bits / Windows / Linux para desarrollo)
+pyserial>=3.5
+numpy>=1.24
+opencv-python-headless>=4.8
+onnxruntime>=1.17
