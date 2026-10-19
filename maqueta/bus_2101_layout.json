@@ -1,0 +1,581 @@
+{
+ "bus_id": "2101",
+ "capacity": {
+  "seats": 41,
+  "standing_positions": 8,
+  "wheelchair_spaces": 0,
+  "door_zones": 2
+ },
+ "cameras": {
+  "front": {
+   "device": 0
+  },
+  "rear": {
+   "device": 1
+  }
+ },
+ "cabin": {},
+ "positions": [
+  {
+   "id": "S01-L1",
+   "kind": "seat",
+   "row_no": 1,
+   "side": "left",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S01-L2",
+   "kind": "seat",
+   "row_no": 1,
+   "side": "left",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S02-L1",
+   "kind": "seat",
+   "row_no": 2,
+   "side": "left",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S02-L2",
+   "kind": "seat",
+   "row_no": 2,
+   "side": "left",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S02-R1",
+   "kind": "seat",
+   "row_no": 2,
+   "side": "right",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S02-R2",
+   "kind": "seat",
+   "row_no": 2,
+   "side": "right",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "P02",
+   "kind": "standing",
+   "row_no": 2,
+   "side": "aisle",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S03-L1",
+   "kind": "seat",
+   "row_no": 3,
+   "side": "left",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S03-L2",
+   "kind": "seat",
+   "row_no": 3,
+   "side": "left",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S03-R1",
+   "kind": "seat",
+   "row_no": 3,
+   "side": "right",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S03-R2",
+   "kind": "seat",
+   "row_no": 3,
+   "side": "right",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "P03",
+   "kind": "standing",
+   "row_no": 3,
+   "side": "aisle",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S04-L1",
+   "kind": "seat",
+   "row_no": 4,
+   "side": "left",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S04-L2",
+   "kind": "seat",
+   "row_no": 4,
+   "side": "left",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S04-R1",
+   "kind": "seat",
+   "row_no": 4,
+   "side": "right",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S04-R2",
+   "kind": "seat",
+   "row_no": 4,
+   "side": "right",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "P04",
+   "kind": "standing",
+   "row_no": 4,
+   "side": "aisle",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S05-L1",
+   "kind": "seat",
+   "row_no": 5,
+   "side": "left",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S05-L2",
+   "kind": "seat",
+   "row_no": 5,
+   "side": "left",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S05-R1",
+   "kind": "seat",
+   "row_no": 5,
+   "side": "right",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S05-R2",
+   "kind": "seat",
+   "row_no": 5,
+   "side": "right",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "P05",
+   "kind": "standing",
+   "row_no": 5,
+   "side": "aisle",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S06-L1",
+   "kind": "seat",
+   "row_no": 6,
+   "side": "left",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S06-L2",
+   "kind": "seat",
+   "row_no": 6,
+   "side": "left",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S06-R1",
+   "kind": "seat",
+   "row_no": 6,
+   "side": "right",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S06-R2",
+   "kind": "seat",
+   "row_no": 6,
+   "side": "right",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "P06",
+   "kind": "standing",
+   "row_no": 6,
+   "side": "aisle",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S07-L1",
+   "kind": "seat",
+   "row_no": 7,
+   "side": "left",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S07-L2",
+   "kind": "seat",
+   "row_no": 7,
+   "side": "left",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S07-R1",
+   "kind": "seat",
+   "row_no": 7,
+   "side": "right",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S07-R2",
+   "kind": "seat",
+   "row_no": 7,
+   "side": "right",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "P07",
+   "kind": "standing",
+   "row_no": 7,
+   "side": "aisle",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S08-L1",
+   "kind": "seat",
+   "row_no": 8,
+   "side": "left",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S08-L2",
+   "kind": "seat",
+   "row_no": 8,
+   "side": "left",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S08-R1",
+   "kind": "seat",
+   "row_no": 8,
+   "side": "right",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S08-R2",
+   "kind": "seat",
+   "row_no": 8,
+   "side": "right",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "P08",
+   "kind": "standing",
+   "row_no": 8,
+   "side": "aisle",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S09-L1",
+   "kind": "seat",
+   "row_no": 9,
+   "side": "left",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S09-L2",
+   "kind": "seat",
+   "row_no": 9,
+   "side": "left",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S09-R1",
+   "kind": "seat",
+   "row_no": 9,
+   "side": "right",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S09-R2",
+   "kind": "seat",
+   "row_no": 9,
+   "side": "right",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "P09",
+   "kind": "standing",
+   "row_no": 9,
+   "side": "aisle",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S10-L1",
+   "kind": "seat",
+   "row_no": 10,
+   "side": "left",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S10-L2",
+   "kind": "seat",
+   "row_no": 10,
+   "side": "left",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S11-T1",
+   "kind": "seat",
+   "row_no": 11,
+   "side": "rear",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S11-T2",
+   "kind": "seat",
+   "row_no": 11,
+   "side": "rear",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S11-T3",
+   "kind": "seat",
+   "row_no": 11,
+   "side": "rear",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S11-T4",
+   "kind": "seat",
+   "row_no": 11,
+   "side": "rear",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "S11-T5",
+   "kind": "seat",
+   "row_no": 11,
+   "side": "rear",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "D-FRONT",
+   "kind": "door",
+   "row_no": 1,
+   "side": "right",
+   "camera": "front",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  },
+  {
+   "id": "D-REAR",
+   "kind": "door",
+   "row_no": 10,
+   "side": "right",
+   "camera": "rear",
+   "roi": {
+    "calibrated": false,
+    "polygon": []
+   }
+  }
+ ]
+}
