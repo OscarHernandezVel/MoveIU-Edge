@@ -1,0 +1,6 @@
+# Nombres estables para el hardware de la maqueta (copiar a /etc/udev/rules.d/ y ejecutar:
+#   sudo udevadm control --reload && sudo udevadm trigger)
+# Arduino UNO R3 original (ATmega16U2) y clones con CH340 -> /dev/arduino
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0043", SYMLINK+="arduino", GROUP="dialout", MODE="0660"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2a03", ATTRS{idProduct}=="0043", SYMLINK+="arduino", GROUP="dialout", MODE="0660"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="arduino", GROUP="dialout", MODE="0660"
