@@ -1,0 +1,27 @@
+# Servicio systemd: arranca el agente al encender la Raspberry y lo reinicia si falla.
+#   sudo cp deploy/bus-edge.service /etc/systemd/system/ && sudo systemctl enable --now bus-edge
+#   journalctl -u bus-edge -f        (ver los mensajes)
+[Unit]
+Description=Agente a bordo de la maqueta del bus (puertas, cámaras, GPS)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+SupplementaryGroups=dialout video
+WorkingDirectory=/home/pi/core-service-py/edge
+Environment=PYTHONPATH=/home/pi/core-service-py/edge/src
+ExecStart=/home/pi/core-service-py/edge/.venv/bin/python -m bus_edge --env edge.env run
+Restart=always
+RestartSec=5
+# Endurecimiento: sin privilegios nuevos, sistema de archivos protegido salvo la carpeta de datos.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/pi/core-service-py/edge/data /home/pi/core-service-py/edge/maqueta
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
