@@ -88,9 +88,11 @@ class TestOutbox:
 class Recorder(BaseHTTPRequestHandler):
     responses: ClassVar[list[tuple[int, Any]]] = []
     received: ClassVar[list[tuple[str, dict[str, str], Any]]] = []
+    delay: ClassVar[float] = 0.0
 
     def do_POST(self) -> None:
         body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        time.sleep(Recorder.delay)
         Recorder.received.append((self.path, dict(self.headers), body))
         status, answer = Recorder.responses.pop(0) if Recorder.responses else (200, {"status": "applied"})
         raw = json.dumps(answer).encode()
@@ -106,7 +108,7 @@ class Recorder(BaseHTTPRequestHandler):
 
 @pytest.fixture
 def server() -> Iterator[str]:
-    Recorder.responses, Recorder.received = [], []
+    Recorder.responses, Recorder.received, Recorder.delay = [], [], 0.0
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), Recorder)
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
@@ -134,6 +136,12 @@ class TestClient:
         Recorder.responses = [(status, {"error": {}})]
         result = IngestClient(server, KEY).send_one("2101", payload(1.0))
         assert not result.ok and result.retryable is retryable and result.status == status
+
+    def test_a_batch_gets_more_time_than_one_reading(self, server: str) -> None:
+        Recorder.delay = 1.5  # a server that needs 1.5 s, like a batch of 500 on a busy database
+        client = IngestClient(server, KEY, timeout_s=1, batch_timeout_s=4)
+        assert client.send_one("2101", payload(1.0)) == SendResult(False, True, None)  # timed out: retried later
+        assert client.send_batch([("2101", payload(1.0)), ("2101", payload(2.0))]).ok
 
     def test_an_unreachable_server_is_retryable(self) -> None:
         result = IngestClient("http://127.0.0.1:9", KEY, timeout_s=1).send_one("2101", payload(1.0))
