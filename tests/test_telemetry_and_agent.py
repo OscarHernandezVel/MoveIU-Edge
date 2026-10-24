@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import threading
+import time
 from collections.abc import Iterator
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -267,6 +268,41 @@ class TestAgent:
         gps.terminal = True
         agent.cycle()
         assert doors.snapshot().on_board == 0
+
+    def test_a_hung_server_does_not_delay_the_readings(self) -> None:
+        class HungClient(FakeClient):
+            def __init__(self) -> None:
+                super().__init__()
+                self.release = threading.Event()
+
+            def _send(self, bodies: list[dict[str, Any]]) -> SendResult:
+                self.release.wait(10)  # the server accepted the connection and never answers
+                return super()._send(bodies)
+
+        client = HungClient()
+        settings = EdgeSettings.from_env({"EDGE_INGEST_KEY": KEY, "EDGE_CAMERAS": "off", "EDGE_SEND_INTERVAL": "1"})
+        agent = EdgeAgent(
+            settings,
+            SimulatedDoorLink(seed=1),
+            FixedGps(1.2, -77.3),
+            {},
+            OccupancyEstimator(maqueta_layout()),
+            Outbox(":memory:"),
+            client,  # type: ignore[arg-type]
+            TerminalDetector([]),
+            "occ-test",
+        )
+        stop, reports = threading.Event(), []
+        runner = threading.Thread(target=agent.run, args=(stop, reports.append))
+        runner.start()
+        time.sleep(2.5)
+        queued_while_hung = [r.backlog for r in reports]
+        client.release.set()
+        time.sleep(1.5)
+        stop.set()
+        runner.join(5)
+        assert len(queued_while_hung) >= 3 and queued_while_hung == sorted(queued_while_hung)  # one reading per second
+        assert sum(len(batch) for batch in client.sent) >= 3  # what queued up goes out once the server answers
 
     def test_without_a_position_no_reading_is_made(self) -> None:
         class NoFix(FixedGps):

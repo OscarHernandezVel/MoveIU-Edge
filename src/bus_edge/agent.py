@@ -8,6 +8,9 @@ Cycle (``EdgeAgent.cycle``):
 4. the outbox is flushed oldest first: one request when it holds one reading, a batch of up to 500 when a
    backlog built up; network errors back off exponentially (3 s -> 60 s) without blocking the counting.
 
+In :meth:`EdgeAgent.run` step 4 runs in its own thread: a hung server makes a request wait up to its timeout
+(8 s, 30 s for a batch), and the readings must still be taken every 3 s.
+
 Without a position (GPS still searching) no reading is produced: the server needs coordinates. Without
 cameras the reading still goes out, with confidence 0, and the server relies on the door count.
 """
@@ -85,6 +88,8 @@ class EdgeAgent:
         self._mono = monotonic
         self._backoff = 0.0
         self._next_attempt = 0.0
+        self._tally_lock = threading.Lock()
+        self._tally = (0, 0)  # (sent, dropped) by the upload thread since the last report
 
     # ---------------------------------------------------------------- lifecycle
     def start(self) -> None:
@@ -102,16 +107,34 @@ class EdgeAgent:
 
     def run(self, stop: threading.Event, on_report: Callable[[CycleReport], None] | None = None) -> None:
         interval = self._settings.send_interval_s
+        uploader = threading.Thread(target=self._upload_loop, args=(stop,), name="uploader", daemon=True)
+        uploader.start()
         next_tick = self._mono()
         while not stop.is_set():
-            report = self.cycle()
+            report = self.cycle(send=False)
             if on_report is not None:
                 on_report(report)
             next_tick += interval
             stop.wait(max(0.0, next_tick - self._mono()))
+        uploader.join(timeout=5.0)  # a request in flight is abandoned: its readings stay queued
+
+    def _upload_loop(self, stop: threading.Event) -> None:
+        while not stop.is_set():
+            sent, dropped = self.flush()
+            with self._tally_lock:
+                self._tally = (self._tally[0] + sent, self._tally[1] + dropped)
+            if sent + dropped == 0 or len(self._outbox) == 0:  # otherwise a backlog is draining: go on at once
+                stop.wait(self._settings.send_interval_s)
+
+    def _take_tally(self) -> tuple[int, int]:
+        with self._tally_lock:
+            tally, self._tally = self._tally, (0, 0)
+        return tally
 
     # -------------------------------------------------------------------- cycle
-    def cycle(self) -> CycleReport:
+    def cycle(self, send: bool = True) -> CycleReport:
+        """One reading. With ``send`` the outbox is flushed here too; :meth:`run` leaves that to its upload thread
+        and reports what the thread sent since the previous cycle."""
         fix = self._gps.current()
         if self._terminal.arrived(fix, self._gps.at_terminal()):
             log.info("Terminal reached: door counter reset")
@@ -129,7 +152,7 @@ class EdgeAgent:
             self._outbox.put(self._settings.bus_id, payload)
         if not doors.healthy(now):
             note = (note + "; " if note else "") + "contador de puertas sin señal"
-        sent, dropped = self.flush()
+        sent, dropped = self.flush() if send else self._take_tally()
         return CycleReport(fix is not None, sent, dropped, len(self._outbox), doors.on_board, vision, note)
 
     def flush(self) -> tuple[int, int]:
