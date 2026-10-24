@@ -83,6 +83,16 @@ class TestOutbox:
         box.put("2101", payload(1000.0))
         assert [p.ts for p in box.oldest(10)] == [1000.0]
 
+    def test_a_backlog_larger_than_one_statement_is_updated_and_removed(self) -> None:
+        box = Outbox(":memory:")
+        for ts in range(1200):  # more ids than one statement takes (500 per statement)
+            box.put("2101", payload(float(ts)))
+        pending = box.oldest(1200)
+        box.failed([p.id for p in pending[:1100]])
+        assert sum(p.attempts for p in box.oldest(1200)) == 1100
+        box.remove([p.id for p in pending[:1150]])
+        assert [p.ts for p in box.oldest(100)] == [float(ts) for ts in range(1150, 1200)]
+
 
 # -------------------------------------------------------------- HTTP client
 class Recorder(BaseHTTPRequestHandler):
