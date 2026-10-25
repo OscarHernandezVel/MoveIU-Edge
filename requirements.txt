@@ -1,5 +1,7 @@
-# Agente a bordo (Raspberry Pi OS 64 bits / Windows / Linux para desarrollo)
+# Agente a bordo: portátil con Windows (equipo de la maqueta), Linux o Raspberry Pi OS 64 bits
 pyserial>=3.5
 numpy>=1.24
-opencv-python-headless>=4.8
+# Con ventanas: la calibración (python -m bus_edge calibrate) se hace en el mismo equipo.
+# En una Raspberry sin pantalla puede usar opencv-python-headless (no instale los dos a la vez).
+opencv-python>=4.8
 onnxruntime>=1.17
