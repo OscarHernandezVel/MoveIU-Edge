@@ -33,6 +33,8 @@ class TestProtocol:
         assert event == DoorEvent(7, Door.FRONT, DoorEventKind.IN, 5, 2, 4000)
         assert parse_line(frame("HB,8,5,2,0,1,3,5000")) == Heartbeat(8, 5, 2, False, True, 3, 5000)
         assert parse_line(frame("ACK,RESET,9")) == Ack("RESET", 9)
+        aborted = parse_line(frame("DOOR,10,R,ABORTED,5,2,6000"))
+        assert aborted == DoorEvent(10, Door.REAR, DoorEventKind.ABORTED, 5, 2, 6000)
 
     @pytest.mark.parametrize(
         "line",
@@ -144,6 +146,18 @@ class TestCounter:
         counter.apply(hb(3, 0, 2), 2.0)  # two alightings nobody saw boarding
         assert counter.snapshot().on_board == 0
 
+    def test_both_doors_count_both_ways_and_aborted_crossings_are_kept_apart(self) -> None:
+        counter = PassengerCounter()
+        lines = [("IN", 1, 0, "F"), ("IN", 2, 0, "R"), ("ABORTED", 2, 0, "F"), ("OUT", 2, 1, "F"), ("IN", 3, 1, "F")]
+        for seq, (kind, b, a, which) in enumerate(lines, start=1):
+            counter.apply(door(seq, kind, b, a, which), 1.0)
+        snap = counter.snapshot()
+        assert (snap.front_in, snap.front_out, snap.rear_in, snap.rear_out, snap.aborted) == (2, 1, 1, 0, 1)
+        assert snap.on_board == 2  # the aborted crossing never changes the count
+        counter.apply(parse_line(frame("ACK,RESET,6")), 2.0)
+        snap = counter.snapshot()
+        assert (snap.front_in, snap.rear_in, snap.aborted, snap.on_board) == (0, 0, 0, 0)
+
     def test_obstruction_flags(self) -> None:
         counter = PassengerCounter()
         counter.apply(door(1, "BLOCKED", 0, 0, "R"), 0.0)
@@ -214,5 +228,8 @@ class TestLinks:
             link.step()
             snap = link.snapshot()
             assert 0 <= snap.on_board <= 10
+        snap = link.snapshot()
+        assert snap.front_in + snap.rear_in == snap.boarded and snap.front_out + snap.rear_out == snap.alighted
+        assert snap.rear_in > 0 and snap.front_out > 0 and snap.aborted > 0  # both doors, both ways
         link.request_reset()
         assert link.snapshot().on_board == 0

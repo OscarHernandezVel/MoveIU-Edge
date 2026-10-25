@@ -140,7 +140,8 @@ def _open_serial(port: str, baud: int) -> Any:
 
 
 class SimulatedDoorLink(DoorLink):
-    """Produces the same lines as the firmware, with people boarding at the front and alighting at the rear.
+    """Produces the same lines as the firmware: people board and alight at both doors (mostly boarding at the
+    front and alighting at the rear) and now and then somebody turns back in a doorway (ABORTED).
 
     For developing on a PC without the Arduino (``EDGE_SERIAL_PORT=sim``). Deterministic with a seed."""
 
@@ -173,17 +174,22 @@ class SimulatedDoorLink(DoorLink):
         self._emit(f"ACK,RESET,{self._next()}")
 
     def step(self) -> None:
-        """One simulated stop: a few people get off at the rear, a few get on at the front."""
+        """One simulated stop: a few people get off, a few get on, sometimes one turns back."""
         on_board = self._boarded - self._alighted
         for _ in range(self._random.randint(0, min(3, on_board))):
             self._alighted += 1
-            self._emit(f"DOOR,{self._next()},R,OUT,{self._boarded},{self._alighted},{self._ms()}")
+            self._door_line("R" if self._random.random() < 0.8 else "F", "OUT")
         for _ in range(self._random.randint(0, 4)):
             if self._boarded - self._alighted >= self._capacity:
                 break
             self._boarded += 1
-            self._emit(f"DOOR,{self._next()},F,IN,{self._boarded},{self._alighted},{self._ms()}")
+            self._door_line("F" if self._random.random() < 0.8 else "R", "IN")
+        if self._random.random() < 0.2:
+            self._door_line(self._random.choice("FR"), "ABORTED")
         self._emit(f"HB,{self._next()},{self._boarded},{self._alighted},0,0,0,{self._ms()}")
+
+    def _door_line(self, door: str, kind: str) -> None:
+        self._emit(f"DOOR,{self._next()},{door},{kind},{self._boarded},{self._alighted},{self._ms()}")
 
     def _run(self) -> None:
         next_stop = self._clock() + self._period
