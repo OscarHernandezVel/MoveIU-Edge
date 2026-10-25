@@ -156,3 +156,27 @@ def test_the_script_writes_the_files(cut: ModuleType, tmp_path: Path) -> None:
     (tmp_path / "split").mkdir()
     assert cut.main(["--split", "--out", str(tmp_path / "split")]) == 0
     assert len(list((tmp_path / "split").glob("corte_1_carroceria_hoja*.svg"))) >= 2
+
+
+def test_the_3d_model_is_a_valid_obj_with_every_seat_and_sensor(cut: ModuleType, tmp_path: Path) -> None:
+    spec = importlib.util.spec_from_file_location("make_3d_model", SCRIPT.with_name("make_3d_model.py"))
+    assert spec is not None and spec.loader is not None
+    model = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(model)
+    assert model.main(["--out", str(tmp_path)]) == 0
+    lines = (tmp_path / "maqueta_3d.obj").read_text().splitlines()
+    vertices = [tuple(map(float, line.split()[1:])) for line in lines if line.startswith("v ")]
+    faces = [list(map(int, line.split()[1:])) for line in lines if line.startswith("f ")]
+    assert faces and all(1 <= i <= len(vertices) for face in faces for i in face)
+    names = [line[2:] for line in lines if line.startswith("o ")]
+    assert sum(name.startswith("ASIENTO") for name in names) == 19  # 18 double seats + the rear bench
+    assert sum(name.startswith("FC-51") for name in names) == 4
+    materials = (tmp_path / "maqueta_3d.mtl").read_text()
+    assert all(f"newmtl {m}" in materials for m in {line[7:] for line in lines if line.startswith("usemtl ")})
+    # walls: the openings are left out, so the right wall has less material than the left one
+    wall_area = {
+        name: sum((x1 - x0) * (z1 - z0) for x0, x1, _, _, z0, z1 in boxes)
+        for name, _, boxes in model.objects
+        if name.startswith("LATERAL")
+    }
+    assert wall_area["LATERAL DERECHO (puertas)"] < wall_area["LATERAL IZQUIERDO"] < cut.LENGTH * cut.HEIGHT

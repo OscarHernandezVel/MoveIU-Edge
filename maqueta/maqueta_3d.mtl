@@ -1,0 +1,79 @@
+newmtl mdf
+Kd 0.80 0.66 0.47
+Ka 0.2 0.2 0.2
+illum 1
+
+newmtl asiento
+Kd 0.55 0.40 0.27
+Ka 0.2 0.2 0.2
+illum 1
+
+newmtl grabado
+Kd 0.62 0.48 0.33
+Ka 0.2 0.2 0.2
+illum 1
+
+newmtl base
+Kd 0.35 0.35 0.38
+Ka 0.2 0.2 0.2
+illum 1
+
+newmtl camara
+Kd 0.08 0.08 0.08
+Ka 0.2 0.2 0.2
+illum 1
+
+newmtl lente
+Kd 0.25 0.27 0.32
+Ka 0.2 0.2 0.2
+illum 1
+
+newmtl fc51
+Kd 0.10 0.30 0.70
+Ka 0.2 0.2 0.2
+illum 1
+
+newmtl arduino
+Kd 0.00 0.50 0.55
+Ka 0.2 0.2 0.2
+illum 1
+
+newmtl protoboard
+Kd 0.95 0.95 0.95
+Ka 0.2 0.2 0.2
+illum 1
+
+newmtl portatil
+Kd 0.20 0.20 0.22
+Ka 0.2 0.2 0.2
+illum 1
+
+newmtl pantalla
+Kd 0.10 0.15 0.25
+Ka 0.2 0.2 0.2
+illum 1
+
+newmtl lego_piel
+Kd 0.98 0.80 0.05
+Ka 0.2 0.2 0.2
+illum 1
+
+newmtl lego_piernas
+Kd 0.10 0.20 0.60
+Ka 0.2 0.2 0.2
+illum 1
+
+newmtl lego_rojo
+Kd 0.80 0.10 0.10
+Ka 0.2 0.2 0.2
+illum 1
+
+newmtl lego_verde
+Kd 0.10 0.55 0.20
+Ka 0.2 0.2 0.2
+illum 1
+
+newmtl lego_blanco
+Kd 0.92 0.92 0.92
+Ka 0.2 0.2 0.2
+illum 1
