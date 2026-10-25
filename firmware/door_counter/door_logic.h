@@ -1,4 +1,5 @@
-// Door-counting logic for one infrared FC-51 sensor, free of Arduino calls so it can be unit tested on a PC.
+// Door-counting logic (one FC-51 filter, two of them per door), free of Arduino calls so it can be unit
+// tested on a PC.
 //
 // The FC-51 output is LOW while something reflects the beam (a passenger, a finger, a figure in the model).
 // A raw signal is noisy: sunlight flicker, a hand that hesitates, a bag that stays in the doorway.
@@ -18,17 +19,18 @@
 
 namespace door {
 
-enum Event : uint8_t { NONE = 0, PASSED = 1, BLOCKED = 2, CLEARED = 3 };
+enum Event : uint8_t { NONE = 0, PASSED = 1, BLOCKED = 2, CLEARED = 3, IN = 4, OUT = 5, ABORTED = 6 };
 
 struct Config {
   uint16_t debounceMs;
   uint16_t minBlockMs;
   uint16_t maxBlockMs;
   uint16_t refractoryMs;
+  uint16_t crossingGapMs;  // both beams clear this long = the crossing is over (see Doorway)
 };
 
 // Values tuned for the 1:20 model (a figure or a finger crossing a 5 cm doorway).
-static const Config DEFAULT_CONFIG = {5, 60, 4000, 350};
+static const Config DEFAULT_CONFIG = {5, 60, 4000, 350, 400};
 
 class Filter {
  public:
@@ -95,8 +97,105 @@ class Filter {
   bool obstructed_;
 };
 
-// Running totals. With one sensor per door (the model's choice) the front door counts boardings and the
-// rear door counts alightings, as in the design document ("+1 pasajero" / "-1 pasajero").
+// Two FC-51 per door, one behind the other in the walking direction: OUTER (street side) and INNER (cabin
+// side). The order in which the beams are interrupted gives the direction, so every door counts both ways
+// and a passenger who turns back is reported instead of miscounted:
+//   * a crossing starts when either beam is blocked and ends when both have been clear for `crossingGapMs`,
+//     so the two legs of one person and the gap between the two beams belong to the same crossing;
+//   * outer blocked first and inner blocked too = IN; inner first and outer too = OUT;
+//   * only one beam blocked, or both at the very same instant = ABORTED: reported, never counted;
+//   * an obstruction of either beam cancels the crossing (BLOCKED ... CLEARED), as with a single sensor.
+class Doorway {
+ public:
+  explicit Doorway(const Config& config = DEFAULT_CONFIG)
+      : config_(config),
+        outer_(config),
+        inner_(config),
+        first_(NOBODY),
+        sawOuter_(false),
+        sawInner_(false),
+        start_(0),
+        lastBlocked_(0),
+        lastCount_(0),
+        hasCounted_(false),
+        obstructed_(false) {}
+
+  Event update(bool outerBlocked, bool innerBlocked, uint32_t nowMs) {
+    const Event outerEvent = outer_.update(outerBlocked, nowMs);
+    const Event innerEvent = inner_.update(innerBlocked, nowMs);
+    if (!obstructed_ && (outerEvent == BLOCKED || innerEvent == BLOCKED)) {
+      obstructed_ = true;
+      first_ = NOBODY;
+      return BLOCKED;
+    }
+    const bool outer = outer_.blocked();
+    const bool inner = inner_.blocked();
+    if (obstructed_) {
+      if (outer || inner) {
+        return NONE;
+      }
+      obstructed_ = false;
+      return CLEARED;
+    }
+    if (first_ == NOBODY) {
+      if (!outer && !inner) {
+        return NONE;
+      }
+      first_ = outer && inner ? BOTH : (outer ? OUTER : INNER);
+      sawOuter_ = outer;
+      sawInner_ = inner;
+      start_ = lastBlocked_ = nowMs;
+      return NONE;
+    }
+    sawOuter_ = sawOuter_ || outer;
+    sawInner_ = sawInner_ || inner;
+    if (outer || inner) {
+      lastBlocked_ = nowMs;
+      return NONE;
+    }
+    if ((uint32_t)(nowMs - lastBlocked_) < config_.crossingGapMs) {
+      return NONE;
+    }
+    return finish();
+  }
+
+  bool obstructed() const { return obstructed_; }
+
+ private:
+  enum First : uint8_t { NOBODY, OUTER, INNER, BOTH };
+
+  Event finish() {
+    const First first = first_;
+    first_ = NOBODY;
+    const uint32_t end = lastBlocked_;
+    if ((uint32_t)(end - start_) < config_.minBlockMs) {
+      return NONE;  // a glitch on one beam
+    }
+    if (first == BOTH || !(sawOuter_ && sawInner_)) {
+      return ABORTED;
+    }
+    if (hasCounted_ && (uint32_t)(end - lastCount_) < config_.refractoryMs) {
+      return NONE;
+    }
+    hasCounted_ = true;
+    lastCount_ = end;
+    return first == OUTER ? IN : OUT;
+  }
+
+  Config config_;
+  Filter outer_;
+  Filter inner_;
+  First first_;
+  bool sawOuter_;
+  bool sawInner_;
+  uint32_t start_;
+  uint32_t lastBlocked_;
+  uint32_t lastCount_;
+  bool hasCounted_;
+  bool obstructed_;
+};
+
+// Running totals of every door: boardings (IN) and alightings (OUT).
 struct Totals {
   uint32_t boarded;
   uint32_t alighted;
