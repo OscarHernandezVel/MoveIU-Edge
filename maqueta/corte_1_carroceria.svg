@@ -135,33 +135,53 @@
 <text x="80.00" y="110.00" font-size="6" font-family="Arial, sans-serif" fill="#0000ff" text-anchor="middle">TRASERA</text>
 </g>
 <g transform="translate(168.00,436.00)">
+<rect x="0.00" y="0.00" width="20.00" height="65.00" fill="none" stroke="#ff0000" stroke-width="0.1"/>
+<rect x="0.00" y="45.00" width="20.00" height="0.01" fill="none" stroke="#0000ff" stroke-width="0.2"/>
+<text x="10.00" y="12.00" font-size="3" font-family="Arial, sans-serif" fill="#0000ff" text-anchor="middle">ARCO F</text>
+</g>
+<g transform="translate(192.00,436.00)">
+<rect x="0.00" y="0.00" width="20.00" height="65.00" fill="none" stroke="#ff0000" stroke-width="0.1"/>
+<rect x="0.00" y="45.00" width="20.00" height="0.01" fill="none" stroke="#0000ff" stroke-width="0.2"/>
+<text x="10.00" y="12.00" font-size="3" font-family="Arial, sans-serif" fill="#0000ff" text-anchor="middle">ARCO F</text>
+</g>
+<g transform="translate(216.00,436.00)">
+<rect x="0.00" y="0.00" width="20.00" height="65.00" fill="none" stroke="#ff0000" stroke-width="0.1"/>
+<rect x="0.00" y="45.00" width="20.00" height="0.01" fill="none" stroke="#0000ff" stroke-width="0.2"/>
+<text x="10.00" y="12.00" font-size="3" font-family="Arial, sans-serif" fill="#0000ff" text-anchor="middle">ARCO R</text>
+</g>
+<g transform="translate(240.00,436.00)">
+<rect x="0.00" y="0.00" width="20.00" height="65.00" fill="none" stroke="#ff0000" stroke-width="0.1"/>
+<rect x="0.00" y="45.00" width="20.00" height="0.01" fill="none" stroke="#0000ff" stroke-width="0.2"/>
+<text x="10.00" y="12.00" font-size="3" font-family="Arial, sans-serif" fill="#0000ff" text-anchor="middle">ARCO R</text>
+</g>
+<g transform="translate(264.00,436.00)">
 <rect x="0.00" y="0.00" width="20.00" height="45.00" fill="none" stroke="#ff0000" stroke-width="0.1"/>
 <circle cx="10.00" cy="19.00" r="1.60" fill="none" stroke="#ff0000" stroke-width="0.1"/>
 <text x="10.00" y="40.00" font-size="3" font-family="Arial, sans-serif" fill="#0000ff" text-anchor="middle">FC51-FE</text>
 </g>
-<g transform="translate(192.00,436.00)">
+<g transform="translate(288.00,436.00)">
 <rect x="0.00" y="0.00" width="20.00" height="45.00" fill="none" stroke="#ff0000" stroke-width="0.1"/>
 <circle cx="10.00" cy="19.00" r="1.60" fill="none" stroke="#ff0000" stroke-width="0.1"/>
 <text x="10.00" y="40.00" font-size="3" font-family="Arial, sans-serif" fill="#0000ff" text-anchor="middle">FC51-FI</text>
 </g>
-<g transform="translate(216.00,436.00)">
+<g transform="translate(312.00,436.00)">
 <rect x="0.00" y="0.00" width="20.00" height="45.00" fill="none" stroke="#ff0000" stroke-width="0.1"/>
 <circle cx="10.00" cy="19.00" r="1.60" fill="none" stroke="#ff0000" stroke-width="0.1"/>
 <text x="10.00" y="40.00" font-size="3" font-family="Arial, sans-serif" fill="#0000ff" text-anchor="middle">FC51-RE</text>
 </g>
-<g transform="translate(240.00,436.00)">
+<g transform="translate(336.00,436.00)">
 <rect x="0.00" y="0.00" width="20.00" height="45.00" fill="none" stroke="#ff0000" stroke-width="0.1"/>
 <circle cx="10.00" cy="19.00" r="1.60" fill="none" stroke="#ff0000" stroke-width="0.1"/>
 <text x="10.00" y="40.00" font-size="3" font-family="Arial, sans-serif" fill="#0000ff" text-anchor="middle">FC51-RI</text>
 </g>
-<g transform="translate(264.00,436.00)">
+<g transform="translate(360.00,436.00)">
 <rect x="0.00" y="0.00" width="160.00" height="30.00" fill="none" stroke="#ff0000" stroke-width="0.1"/>
 <rect x="55.00" y="5.00" width="4.00" height="20.00" fill="none" stroke="#ff0000" stroke-width="0.1"/>
 <rect x="101.00" y="5.00" width="4.00" height="20.00" fill="none" stroke="#ff0000" stroke-width="0.1"/>
 <circle cx="80.00" cy="15.00" r="3.25" fill="none" stroke="#ff0000" stroke-width="0.1"/>
 <text x="80.00" y="27.00" font-size="3.5" font-family="Arial, sans-serif" fill="#0000ff" text-anchor="middle">CAM F</text>
 </g>
-<g transform="translate(428.00,436.00)">
+<g transform="translate(524.00,436.00)">
 <rect x="0.00" y="0.00" width="160.00" height="30.00" fill="none" stroke="#ff0000" stroke-width="0.1"/>
 <rect x="55.00" y="5.00" width="4.00" height="20.00" fill="none" stroke="#ff0000" stroke-width="0.1"/>
 <rect x="101.00" y="5.00" width="4.00" height="20.00" fill="none" stroke="#ff0000" stroke-width="0.1"/>

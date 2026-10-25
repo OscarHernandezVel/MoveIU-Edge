@@ -177,11 +177,25 @@ def end_wall(front: bool) -> Piece:
 
 
 def camera_bar(front: bool) -> Piece:
-    """Crossbar glued at the top of each end: holds a webcam (6.5 mm hole for a 1/4" screw, slots for ties)."""
+    """Crossbar on two spacers at each end (ARCH_RAISE mm over the walls): holds a webcam (6.5 mm hole for a 1/4"
+    screw, slots for ties)."""
     piece = Piece("ARCO CAMARA " + ("DELANTERA" if front else "TRASERA"), INNER_W, 30)
     piece.circles.append((INNER_W / 2, 15, 3.25))
     piece.holes += [(INNER_W / 2 - 25, 5, 4, 20), (INNER_W / 2 + 21, 5, 4, 20)]
     piece.texts.append((INNER_W / 2, 27, "CAM " + ("F" if front else "R"), 3.5))
+    return piece
+
+
+ARCH_RAISE = 45.0  # the arches sit on spacers 45 mm above the walls: lens at 160 mm, tilted 45 degrees
+
+
+def arch_spacer(front: bool, left: bool) -> Piece:
+    """Upright glued inside the top of a side wall (20 mm overlap) that lifts a camera arch ARCH_RAISE mm. From that
+    height (lens at 160 mm, 45 degrees down) the heads of the farthest rows do not overlap in the image; with the
+    arch on the walls a quarter of the positions were misread in the simulation (bus_edge/vision/scene.py)."""
+    piece = Piece("SEPARADOR ARCO " + ("DEL" if front else "TRAS") + (" IZQ" if left else " DER"), 20, ARCH_RAISE + 20)
+    piece.marks.append((0, ARCH_RAISE, 20, 0.01))  # glue line: the top of the wall reaches here
+    piece.texts.append((10, 12, "ARCO " + ("F" if front else "R"), 3))
     return piece
 
 
@@ -293,6 +307,7 @@ def body_pieces() -> list[Piece]:
         camera_bar(front=True),
         camera_bar(front=False),
         *(sensor_bracket(front, inner) for front in (True, False) for inner in (False, True)),
+        *(arch_spacer(front, left) for front in (True, False) for left in (True, False)),
     ]
 
 

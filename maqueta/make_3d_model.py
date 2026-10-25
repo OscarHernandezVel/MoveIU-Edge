@@ -93,14 +93,18 @@ def body() -> None:
         boxes = [(x0, x0 + T, T + u0, T + u1, v0, v1) for u0, u1, v0, v1 in panel_cells(wall.w, wall.h, svg_holes(wall))]
         add(wall.name, "mdf", *boxes)
         bar_x = T if front else L - T - 30
-        add(f"ARCO CAMARA {'DELANTERA' if front else 'TRASERA'}", "mdf", (bar_x, bar_x + 30, T, W - T, H - T, H))
-        # webcam hanging under its bar, lens towards the cabin (the 30-40 degree tilt is not modelled)
+        top = H + cut.ARCH_RAISE  # the arch stands on two spacers glued inside the side walls
+        tag = "DELANTERA" if front else "TRASERA"
+        add(f"ARCO CAMARA {tag}", "mdf", (bar_x, bar_x + 30, T, W - T, top - T, top))
+        add(f"SEPARADORES ARCO {tag}", "mdf",
+            (bar_x + 5, bar_x + 25, T, 2 * T, H - 20, top - T), (bar_x + 5, bar_x + 25, W - 2 * T, W - T, H - 20, top - T))  # fmt: skip
+        # webcam hanging under its bar, lens towards the cabin at 160 mm (the 45 degree tilt is not modelled)
         cam_x, lens = (T + 3, 1) if front else (L - T - 27, -1)
         add("WEBCAM " + ("FRONTAL" if front else "TRASERA"), "camara",
-            (cam_x, cam_x + 24, W / 2 - 19, W / 2 + 19, H - T - 30, H - T))  # fmt: skip
+            (cam_x, cam_x + 24, W / 2 - 19, W / 2 + 19, top - T - 30, top - T))  # fmt: skip
         lens_x = cam_x + 24 if lens > 0 else cam_x - 5
         add("LENTE " + ("FRONTAL" if front else "TRASERA"), "lente",
-            (lens_x, lens_x + 5, W / 2 - 7, W / 2 + 7, H - T - 22, H - T - 8))  # fmt: skip
+            (lens_x, lens_x + 5, W / 2 - 7, W / 2 + 7, top - T - 22, top - T - 8))  # fmt: skip
     floor = cut.floor()
     add("PISO", "mdf", (T, L - T, T, W - T, 0.0, T))
     add("PISO GRABADO", "grabado",
