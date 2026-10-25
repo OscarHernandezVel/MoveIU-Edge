@@ -1,17 +1,20 @@
-"""Person detector for the edge (RF-12.2): YOLOv8n exported to ONNX, run with ONNX Runtime on the Pi's CPU.
+"""Person detector for the edge (RF-12.2): YOLOv8n exported to ONNX, run with ONNX Runtime on the CPU of the on-board
+computer (the Windows laptop of the model bus, or a Raspberry Pi).
 
-Pre-processing letterboxes the frame to ``input_size`` (320 px keeps the Raspberry Pi 4 near 5 fps); the
-YOLOv8 output ``(1, 4 + classes, N)`` is decoded, filtered by score and reduced with non-maximum
+Pre-processing letterboxes the frame to ``input_size`` (640 px on the laptop; 320 px keeps a Raspberry Pi 4 near
+5 fps); the YOLOv8 output ``(1, 4 + classes, N)`` is decoded, filtered by score and reduced with non-maximum
 suppression written in NumPy (no extra dependency). Only the ``person`` class (COCO id 0) is kept.
 
 Export the model once on a PC: ``pip install ultralytics`` then
-``yolo export model=yolov8n.pt format=onnx imgsz=320`` and copy ``yolov8n.onnx`` to ``edge/models/``.
+``yolo export model=yolov8n.pt format=onnx imgsz=640`` and copy ``yolov8n.onnx`` to ``edge/models/``. An exported
+model has a fixed input size: when it differs from ``EDGE_MODEL_INPUT`` the model's own size is used (with a warning).
 Licence: Ultralytics YOLOv8 is AGPL-3.0; a commercial product needs their enterprise licence or another
 detector (the :class:`Detector` interface makes the swap a one-class change).
 """
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,6 +23,7 @@ from typing import Any
 import numpy as np
 
 PERSON = 0
+log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -127,6 +131,18 @@ def decode_yolov8(
     ]
 
 
+def model_input_size(shape: Any, configured: int) -> int:
+    """The square input of an exported model (``[1, 3, 640, 640]``), or ``configured`` when it is dynamic (names
+    instead of numbers). A model exported at 320 cannot run at 640, nor the other way round."""
+    height, width = (shape[2], shape[3]) if len(shape) == 4 else (None, None)
+    if isinstance(height, int) and height == width:
+        if height != configured:
+            log.warning("The model was exported at %s px: using %s instead of EDGE_MODEL_INPUT=%s", height, height,
+                        configured)  # fmt: skip
+        return height
+    return configured
+
+
 class YoloOnnxDetector(Detector):
     def __init__(
         self,
@@ -142,12 +158,13 @@ class YoloOnnxDetector(Detector):
         options = ort.SessionOptions()
         options.intra_op_num_threads = threads
         self._session = ort.InferenceSession(str(model_path), options, providers=["CPUExecutionProvider"])
-        self._input = self._session.get_inputs()[0].name
-        self._size = input_size
+        model_input = self._session.get_inputs()[0]
+        self._input = model_input.name
+        self._size = model_input_size(model_input.shape, input_size)
         self._conf = conf_threshold
         self._iou = iou_threshold
         self._classes = classes
-        self.version = f"yolov8n-onnx-{input_size}"
+        self.version = f"yolov8n-onnx-{self._size}"
 
     def detect(self, frame: Any) -> list[Detection]:
         height, width = frame.shape[:2]

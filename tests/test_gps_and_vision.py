@@ -12,7 +12,7 @@ from bus_edge.calibrate import Calibrator
 from bus_edge.gps.nmea import parse_rmc
 from bus_edge.gps.sources import NmeaSerialGps, Polyline, RouteReplayGps, TerminalDetector, haversine_m, load_route
 from bus_edge.vision.cameras import CameraWorker, OpenCvCamera, usable
-from bus_edge.vision.detector import Detection, NullDetector, decode_yolov8, letterbox, nms
+from bus_edge.vision.detector import Detection, NullDetector, decode_yolov8, letterbox, model_input_size, nms
 from bus_edge.vision.layout import BusLayout, Kind, Position, load_layout, maqueta_layout, point_in_polygon
 from bus_edge.vision.occupancy import DOOR_DWELL_S, CameraObservation, OccupancyEstimator
 
@@ -234,6 +234,17 @@ class TestDetector:
     def test_nms_keeps_the_best_of_overlapping_boxes(self) -> None:
         boxes = np.array([[0, 0, 10, 10], [1, 1, 11, 11], [50, 50, 60, 60]], dtype=np.float32)
         assert nms(boxes, np.array([0.5, 0.9, 0.7]), 0.5) == [1, 2]
+
+    @pytest.mark.parametrize(
+        ("shape", "configured", "used"),
+        [
+            ([1, 3, 320, 320], 640, 320),  # exported at 320: running it at 640 would fail
+            ([1, 3, 640, 640], 640, 640),
+            (["batch", 3, "height", "width"], 640, 640),  # dynamic export: the setting decides
+        ],
+    )
+    def test_the_input_size_of_an_exported_model_wins(self, shape: list[Any], configured: int, used: int) -> None:
+        assert model_input_size(shape, configured) == used
 
     def test_a_recorded_video_plays_in_a_loop_instead_of_a_camera(self, tmp_path: Path) -> None:
         cv2 = pytest.importorskip("cv2")
