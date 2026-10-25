@@ -45,6 +45,9 @@ class Detection:
 
 class Detector(ABC):
     version = "none"
+    #: Where the point that picks a position sits in a box: near the bottom of a person's box (0.8); at the centre of
+    #: a head's box for detectors that only box heads (0.5). The layout is drawn at that height.
+    anchor_height = 0.8
 
     @abstractmethod
     def detect(self, frame: Any) -> list[Detection]:
