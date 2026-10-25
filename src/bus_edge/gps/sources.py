@@ -54,7 +54,8 @@ class FixedGps(GpsSource):
 
 
 class NmeaSerialGps(GpsSource):
-    """NEO-6M on the Raspberry Pi UART (``/dev/serial0``, 9600 baud) or a USB-TTL adapter."""
+    """NEO-6M at 9600 baud: through a USB-TTL adapter (``COM5`` on the Windows laptop, ``/dev/ttyUSB0`` on Linux) or
+    on the UART of a Raspberry Pi (``/dev/serial0``). The laptop of the model bus uses the route replay instead."""
 
     def __init__(
         self,

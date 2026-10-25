@@ -38,7 +38,7 @@ class EdgeSettings:
     #: ``lego_minifigure`` class when the detector was trained on the model bus (docs/lego.md).
     detector_classes: str = "0"
     layout_path: str = "maqueta/bus_2101_layout.json"
-    #: ``replay`` (route trace), ``fixed:lat,lng`` or a serial device of the NEO-6M (``/dev/serial0``).
+    #: ``replay`` (route trace), ``fixed:lat,lng`` or the serial port of a NEO-6M (``COM5``, ``/dev/serial0``).
     gps: str = "replay"
     route_package: str = "../backend/demo_data/pasto_c1_c4.json"
     route_id: str = "C1"
