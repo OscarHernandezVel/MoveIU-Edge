@@ -28,6 +28,17 @@ def _settings(env_file: str) -> EdgeSettings:
     return EdgeSettings.from_env(values)
 
 
+def _keep_awake(on: bool) -> None:
+    """Windows: the laptop must not go to sleep while the agent runs (the screen may still turn off). Without this
+    a presentation on battery or a long pause suspends the cameras, the Arduino link and the uploads."""
+    if sys.platform != "win32":
+        return
+    import ctypes
+
+    es_continuous, es_system_required = 0x80000000, 0x00000001
+    ctypes.windll.kernel32.SetThreadExecutionState(es_continuous | (es_system_required if on else 0))
+
+
 def cmd_run(args: argparse.Namespace) -> int:
     from bus_edge.factory import build_agent
 
@@ -39,9 +50,11 @@ def cmd_run(args: argparse.Namespace) -> int:
     agent.start()
     every = f"{settings.send_interval_s:g}"
     print(f"Bus {settings.bus_id} enviando a {settings.server_url} cada {every} s (Ctrl+C para salir)")
+    _keep_awake(True)
     try:
         agent.run(stop, on_report=lambda report: print(report.line(settings.route_id), flush=True))
     finally:
+        _keep_awake(False)
         agent.stop()
     return 0
 
