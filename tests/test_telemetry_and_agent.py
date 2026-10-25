@@ -12,6 +12,7 @@ from typing import Any, ClassVar
 
 import pytest
 
+from bus_edge.__main__ import calibration_device
 from bus_edge.agent import EdgeAgent
 from bus_edge.config import ConfigError, EdgeSettings, load_env_file
 from bus_edge.doors.link import SimulatedDoorLink
@@ -183,6 +184,12 @@ class TestSettings:
         with pytest.raises(ConfigError) as caught:
             EdgeSettings.from_env(env)
         assert fragment in str(caught.value)
+
+    def test_calibration_uses_the_camera_configured_for_the_agent(self) -> None:
+        laptop = {"EDGE_CAMERAS": "front=1,rear=2"}  # the built-in camera of the laptop is 0
+        assert calibration_device("rear", None, laptop) == 2
+        assert calibration_device("front", None, {}) == 0  # nothing configured: the old default
+        assert calibration_device("front", "3", laptop) == 3 and calibration_device("rear", "v.mp4", {}) == "v.mp4"
 
     def test_private_addresses_may_use_http_and_the_key_can_come_from_a_file(self, tmp_path: Path) -> None:
         secret = tmp_path / "key"

@@ -3,7 +3,7 @@
     python -m bus_edge run          agent: doors + cameras + GPS -> core service, every 3 s
     python -m bus_edge doors        live door counter (to test the wiring of the FC-51)
     python -m bus_edge check        hardware check: serial ports, cameras, model, Arduino
-    python -m bus_edge calibrate --camera front --device 0      draw the positions (RF-9.4)
+    python -m bus_edge calibrate --camera front     draw the positions (RF-9.4); device from EDGE_CAMERAS
     python -m bus_edge layout       write the layout of the LEGO-scale model (41 seats, 8 standing, 2 doors)
 
 Settings come from ``EDGE_*`` variables or from the file given with ``--env`` (default ``edge.env``).
@@ -81,10 +81,22 @@ def cmd_check(args: argparse.Namespace) -> int:
     return run_check(values)
 
 
+def calibration_device(camera: str, given: str | None, values: dict[str, str]) -> int | str:
+    """``--device`` if given; otherwise the device of that camera in ``EDGE_CAMERAS``, so the polygons are drawn on
+    the camera the agent will read (on a laptop the built-in camera is 0 and the webcams 1 and 2)."""
+    if given is None:
+        values = {**values}
+        values.setdefault("EDGE_INGEST_KEY", "not-needed-here")
+        devices = EdgeSettings.from_env(values).camera_devices()
+        return devices.get(camera, 0 if camera == "front" else 1)
+    return int(given) if given.isdigit() else given
+
+
 def cmd_calibrate(args: argparse.Namespace) -> int:
     from bus_edge.calibrate import run
 
-    device: int | str = int(args.device) if str(args.device).isdigit() else args.device
+    device = calibration_device(args.camera, args.device, {**load_env_file(args.env), **os.environ})
+    print(f"Calibrando la cámara {args.camera} (dispositivo {device}).")
     return run(args.layout, args.camera, device, args.bus)
 
 
@@ -111,7 +123,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("check").set_defaults(func=cmd_check)
     calibrate = sub.add_parser("calibrate")
     calibrate.add_argument("--camera", choices=("front", "rear"), required=True)
-    calibrate.add_argument("--device", default="0")
+    calibrate.add_argument("--device", default=None, help="por defecto, el de EDGE_CAMERAS para esa cámara")
     calibrate.add_argument("--layout", default="maqueta/bus_2101_layout.json")
     calibrate.add_argument("--bus", default="2101")
     calibrate.set_defaults(func=cmd_calibrate)
