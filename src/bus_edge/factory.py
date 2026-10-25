@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from bus_edge.agent import EdgeAgent
 from bus_edge.config import EdgeSettings
@@ -14,7 +15,7 @@ from bus_edge.telemetry.outbox import Outbox
 from bus_edge.telemetry.uploader import IngestClient
 from bus_edge.vision.cameras import CameraWorker, OpenCvCamera
 from bus_edge.vision.detector import Detector, NullDetector, YoloOnnxDetector
-from bus_edge.vision.layout import load_layout, maqueta_layout
+from bus_edge.vision.layout import BusLayout, load_layout, maqueta_layout
 from bus_edge.vision.occupancy import OccupancyEstimator
 
 log = logging.getLogger(__name__)
@@ -39,6 +40,12 @@ def build_gps(settings: EdgeSettings) -> tuple[GpsSource, TerminalDetector]:
 
 
 def build_detector(settings: EdgeSettings) -> Detector:
+    if settings.detector == "none":
+        return NullDetector()
+    if settings.detector == "lego":
+        from bus_edge.vision.lego import YellowFigureDetector, parse_hsv
+
+        return YellowFigureDetector(parse_hsv(settings.lego_hsv))
     model = Path(settings.model_path)
     if not model.exists():
         log.warning("Model %s not found: cameras will run without detections (see edge/README.md)", model)
@@ -46,33 +53,55 @@ def build_detector(settings: EdgeSettings) -> Detector:
     return YoloOnnxDetector(model, settings.model_input, settings.conf_threshold, classes=settings.detector_class_ids())
 
 
-def _camera_opener(device: int | str) -> Callable[[], OpenCvCamera]:
-    return lambda: OpenCvCamera(device)
+def build_layout(settings: EdgeSettings) -> BusLayout:
+    """The simulated cameras bring their own exact layout (projected from their pose); real ones use the calibrated
+    file, or the uncalibrated model layout until ``calibrate`` has been run."""
+    if settings.simulated_cameras():
+        from bus_edge.vision.scene import projected_layout
 
-
-def build_agent(settings: EdgeSettings) -> EdgeAgent:
+        log.info("Simulated cameras: layout projected from the camera poses (no calibration needed)")
+        return projected_layout(settings.bus_id)
     layout_path = Path(settings.layout_path)
     layout = load_layout(layout_path) if layout_path.exists() else maqueta_layout(settings.bus_id)
-    for problem in layout.problems():
-        log.warning("Layout: %s", problem)
     if layout.calibrated_share() < 1.0:
         log.warning(
             "Only %.0f %% of the positions are calibrated: run 'python -m bus_edge calibrate'",
             layout.calibrated_share() * 100,
         )
+    return layout
+
+
+def _camera_opener(device: int | str, simulated: Any = None, name: str = "") -> Callable[[], Any]:
+    if device == "sim":
+        from bus_edge.vision.scene import SimulatedCamera
+
+        return lambda: SimulatedCamera(name, simulated)
+    return lambda: OpenCvCamera(device)
+
+
+def build_agent(settings: EdgeSettings) -> EdgeAgent:
+    layout = build_layout(settings)
+    for problem in layout.problems():
+        log.warning("Layout: %s", problem)
     detector = build_detector(settings)
+    doors = build_doors(settings)
+    passengers = None
+    if settings.simulated_cameras():
+        from bus_edge.vision.scene import SimulatedPassengers
+
+        passengers = SimulatedPassengers(lambda: doors.snapshot().on_board)  # cameras and doors tell one story
     workers = {
-        name: CameraWorker(name, _camera_opener(device), detector, settings.vision_fps)
+        name: CameraWorker(name, _camera_opener(device, passengers, name), detector, settings.vision_fps)
         for name, device in settings.camera_devices().items()
     }
     gps, terminal = build_gps(settings)
     version = settings.model_version if detector.version != "no-model" else f"{settings.model_version}-doors"
     return EdgeAgent(
         settings,
-        build_doors(settings),
+        doors,
         gps,
         workers,
-        OccupancyEstimator(layout),
+        OccupancyEstimator(layout, anchor_height=detector.anchor_height),
         Outbox(settings.outbox_path),
         IngestClient(settings.server_url, settings.ingest_key, verify_tls=settings.verify_tls),
         terminal,

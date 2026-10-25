@@ -28,8 +28,14 @@ class EdgeSettings:
     #: ``auto`` (find the Arduino by USB id), a device path, or ``sim`` (simulated doors).
     serial_port: str = "auto"
     baud: int = 115_200
-    #: ``front=0,rear=1`` (indexes or /dev/v4l/by-path/... devices), or ``off``.
+    #: ``front=0,rear=1`` (indexes, video files or /dev/v4l/by-path/... devices), ``sim`` (the model rendered in 3D,
+    #: :mod:`bus_edge.vision.scene`), or ``off``. On a laptop the built-in camera is usually 0, so
+    #: ``deploy/edge.env.example`` uses ``front=1,rear=2``.
     cameras: str = "front=0,rear=1"
+    #: ``lego`` (yellow minifigure heads, by colour), ``yolo`` (the ONNX person model) or ``none``.
+    detector: str = "lego"
+    #: Yellow thresholds of the ``lego`` detector: hue_min,hue_max,saturation_min,value_min (OpenCV HSV).
+    lego_hsv: str = "20,35,150,90"
     model_path: str = "models/yolov8n.onnx"
     model_input: int = 320
     vision_fps: float = 5.0
@@ -63,6 +69,8 @@ class EdgeSettings:
             serial_port=source.get("EDGE_SERIAL_PORT", defaults.serial_port),
             baud=int(source.get("EDGE_BAUD", defaults.baud)),
             cameras=source.get("EDGE_CAMERAS", defaults.cameras),
+            detector=source.get("EDGE_DETECTOR", defaults.detector).strip().lower(),
+            lego_hsv=source.get("EDGE_LEGO_HSV", defaults.lego_hsv),
             model_path=source.get("EDGE_MODEL_PATH", defaults.model_path),
             model_input=int(source.get("EDGE_MODEL_INPUT", defaults.model_input)),
             vision_fps=float(source.get("EDGE_VISION_FPS", defaults.vision_fps)),
@@ -89,6 +97,10 @@ class EdgeSettings:
             name, _, device = part.partition("=")
             devices[name.strip()] = int(device) if device.strip().isdigit() else device.strip()
         return devices
+
+    def simulated_cameras(self) -> bool:
+        devices = self.camera_devices()
+        return bool(devices) and all(device == "sim" for device in devices.values())
 
     def detector_class_ids(self) -> tuple[int, ...]:
         return tuple(int(part) for part in self.detector_classes.split(",") if part.strip().isdigit())
@@ -118,6 +130,16 @@ class EdgeSettings:
             problems.append("EDGE_DETECTOR_CLASSES must be class ids separated by commas, e.g. 0 or 0,1")
         if set(self.camera_devices()) - {"front", "rear"}:
             problems.append("EDGE_CAMERAS names must be front and/or rear, e.g. front=0,rear=1")
+        if "sim" in self.camera_devices().values() and not self.simulated_cameras():
+            problems.append("EDGE_CAMERAS: sim goes for both cameras or for none (front=sim,rear=sim)")
+        if self.detector not in ("lego", "yolo", "none"):
+            problems.append("EDGE_DETECTOR must be lego, yolo or none")
+        try:
+            from bus_edge.vision.lego import parse_hsv
+
+            parse_hsv(self.lego_hsv)
+        except ValueError as error:
+            problems.append(str(error))
         if problems:
             raise ConfigError(problems)
 
