@@ -23,6 +23,7 @@ class Door(StrEnum):
 class DoorEventKind(StrEnum):
     IN = "IN"
     OUT = "OUT"
+    ABORTED = "ABORTED"  # a crossing that turned back (only one of the two beams): reported, never counted
     BLOCKED = "BLOCKED"
     CLEARED = "CLEARED"
 
