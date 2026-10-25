@@ -185,11 +185,14 @@ def camera_bar(front: bool) -> Piece:
     return piece
 
 
-def sensor_bracket(front: bool) -> Piece:
-    """L-bracket glued to the door jamb; the FC-51 is screwed with M3 (3.2 mm hole) looking across the door."""
-    piece = Piece("SOPORTE FC-51 " + ("DEL" if front else "TRAS"), 20, 45)
+def sensor_bracket(front: bool, inner: bool) -> Piece:
+    """L-bracket glued to the door jamb; the FC-51 is screwed with M3 (3.2 mm hole) looking across the door.
+
+    Two per door: the outer one sticks out of the bus, the inner one into the cabin, so their beams are
+    15-25 mm apart in the walking direction and the firmware tells boardings from alightings."""
+    piece = Piece("SOPORTE FC-51 " + ("DEL" if front else "TRAS") + (" INT" if inner else " EXT"), 20, 45)
     piece.circles.append((10, 19, 1.6))  # hole 26 mm above the floor: the torso of a minifigure
-    piece.texts.append((10, 40, "FC51-" + ("F" if front else "R"), 3))
+    piece.texts.append((10, 40, "FC51-" + ("F" if front else "R") + ("I" if inner else "E"), 3))
     return piece
 
 
@@ -289,8 +292,7 @@ def body_pieces() -> list[Piece]:
         end_wall(front=False),
         camera_bar(front=True),
         camera_bar(front=False),
-        sensor_bracket(front=True),
-        sensor_bracket(front=False),
+        *(sensor_bracket(front, inner) for front in (True, False) for inner in (False, True)),
     ]
 
 
