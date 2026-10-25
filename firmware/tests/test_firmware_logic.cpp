@@ -88,6 +88,109 @@ static void millis_overflow_is_harmless() {
   CHECK(events == 1 && last == door::PASSED);
 }
 
+// Drives a Doorway with 1 ms samples from 0 to `end`: each beam is blocked inside its spans [from, to).
+// Copies up to 8 events (in order) into `seen` and returns how many there were.
+struct Span {
+  unsigned from;
+  unsigned to;
+};
+
+static int cross(door::Doorway& doorway, const Span* outer, int outerCount, const Span* inner, int innerCount,
+                 unsigned end, door::Event* seen) {
+  int events = 0;
+  for (unsigned t = 0; t < end; ++t) {
+    bool o = false;
+    bool i = false;
+    for (int k = 0; k < outerCount; ++k) o = o || (t >= outer[k].from && t < outer[k].to);
+    for (int k = 0; k < innerCount; ++k) i = i || (t >= inner[k].from && t < inner[k].to);
+    door::Event event = doorway.update(o, i, t);
+    if (event != door::NONE) {
+      if (events < 8) seen[events] = event;
+      ++events;
+    }
+  }
+  return events;
+}
+
+static void outer_then_inner_is_a_boarding() {
+  door::Doorway doorway;
+  door::Event seen[8];
+  const Span outer[] = {{100, 300}};
+  const Span inner[] = {{200, 400}};
+  CHECK(cross(doorway, outer, 1, inner, 1, 1500, seen) == 1);
+  CHECK(seen[0] == door::IN);
+}
+
+static void inner_then_outer_is_an_alighting() {
+  door::Doorway doorway;
+  door::Event seen[8];
+  const Span outer[] = {{200, 400}};
+  const Span inner[] = {{100, 300}};
+  CHECK(cross(doorway, outer, 1, inner, 1, 1500, seen) == 1);
+  CHECK(seen[0] == door::OUT);
+}
+
+static void turning_back_is_reported_not_counted() {
+  door::Doorway doorway;
+  door::Event seen[8];
+  const Span outer[] = {{100, 300}};
+  CHECK(cross(doorway, outer, 1, nullptr, 0, 1500, seen) == 1);
+  CHECK(seen[0] == door::ABORTED);
+}
+
+static void a_gap_between_the_beams_is_the_same_crossing() {
+  door::Doorway doorway;
+  door::Event seen[8];
+  const Span outer[] = {{100, 200}};
+  const Span inner[] = {{350, 450}};  // 150 ms with both beams clear: less than crossingGapMs
+  CHECK(cross(doorway, outer, 1, inner, 1, 1500, seen) == 1);
+  CHECK(seen[0] == door::IN);
+}
+
+static void both_legs_of_one_person_count_once() {
+  door::Doorway doorway;
+  door::Event seen[8];
+  const Span outer[] = {{100, 250}, {400, 520}};
+  const Span inner[] = {{180, 320}, {460, 600}};
+  CHECK(cross(doorway, outer, 2, inner, 2, 2000, seen) == 1);
+  CHECK(seen[0] == door::IN);
+}
+
+static void two_people_one_after_the_other_count_twice() {
+  door::Doorway doorway;
+  door::Event seen[8];
+  const Span outer[] = {{100, 300}, {1200, 1400}};
+  const Span inner[] = {{200, 400}, {1300, 1500}};
+  CHECK(cross(doorway, outer, 2, inner, 2, 2500, seen) == 2);
+  CHECK(seen[0] == door::IN && seen[1] == door::IN);
+}
+
+static void both_beams_at_once_is_ambiguous() {
+  door::Doorway doorway;
+  door::Event seen[8];
+  const Span outer[] = {{100, 300}};
+  const Span inner[] = {{100, 300}};
+  CHECK(cross(doorway, outer, 1, inner, 1, 1500, seen) == 1);
+  CHECK(seen[0] == door::ABORTED);
+}
+
+static void a_glitch_on_one_beam_is_silent() {
+  door::Doorway doorway;
+  door::Event seen[8];
+  const Span outer[] = {{100, 130}};  // 30 ms < minimum block
+  CHECK(cross(doorway, outer, 1, nullptr, 0, 1500, seen) == 0);
+}
+
+static void a_blocked_doorway_is_reported_not_counted() {
+  door::Doorway doorway;
+  door::Event seen[8];
+  const Span outer[] = {{100, 6000}};  // a bag left on the outer beam
+  const Span inner[] = {{200, 400}};
+  CHECK(cross(doorway, outer, 1, inner, 1, 7000, seen) == 2);
+  CHECK(seen[0] == door::BLOCKED && seen[1] == door::CLEARED);
+  CHECK(!doorway.obstructed());
+}
+
 static void totals_never_go_negative() {
   door::Totals totals = {2, 5};
   CHECK(totals.onBoard() == 0);
@@ -135,6 +238,15 @@ int main() {
   two_legs_of_one_person_count_once();
   an_obstruction_is_reported_not_counted();
   millis_overflow_is_harmless();
+  outer_then_inner_is_a_boarding();
+  inner_then_outer_is_an_alighting();
+  turning_back_is_reported_not_counted();
+  a_gap_between_the_beams_is_the_same_crossing();
+  both_legs_of_one_person_count_once();
+  two_people_one_after_the_other_count_twice();
+  both_beams_at_once_is_ambiguous();
+  a_glitch_on_one_beam_is_silent();
+  a_blocked_doorway_is_reported_not_counted();
   totals_never_go_negative();
   frames_carry_an_nmea_checksum();
   commands_are_read_line_by_line();
