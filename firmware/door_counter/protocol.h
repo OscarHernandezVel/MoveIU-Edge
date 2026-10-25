@@ -1,7 +1,8 @@
-// Serial protocol between the Arduino and the Raspberry Pi (plain ASCII lines, 115200 baud).
+// Serial protocol between the Arduino and the on-board computer (plain ASCII lines, 115200 baud).
 //
 //   $BOOT,<firmware>,<ms>*CS                          after every reset of the Arduino
-//   $DOOR,<seq>,<F|R>,<IN|OUT|BLOCKED|CLEARED>,<boarded>,<alighted>,<ms>*CS
+//   $DOOR,<seq>,<F|R>,<IN|OUT|ABORTED|BLOCKED|CLEARED>,<boarded>,<alighted>,<ms>*CS
+//        both doors report IN and OUT; ABORTED = a crossing that turned back (not counted)
 //   $HB,<seq>,<boarded>,<alighted>,<front_blocked>,<rear_blocked>,<noise_edges>,<ms>*CS   every second
 //   $ACK,<RESET|STATUS|BUTTON>,<seq>*CS
 //
