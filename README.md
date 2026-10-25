@@ -109,7 +109,32 @@ Para que arranque solo al encender: `bash deploy/setup_pi.sh --service` y `sudo 
 (mensajes con `journalctl -u bus-edge -f`). En `edge.env` use `EDGE_CAMERAS=front=0,rear=1`, `EDGE_MODEL_INPUT=320`
 y, sin pantalla, `opencv-python-headless` en lugar de `opencv-python`.
 
-## 4. Modelo de visión
+## 4. Visión: figuras Lego amarillas y simulación 3D
+
+**Detector por defecto (`EDGE_DETECTOR=lego`).** Las minifiguras de la maqueta tienen la cabeza y las manos del
+mismo amarillo Lego, un color que nada más tiene en el bus: el MDF y las sillas son marrones y los torsos deben ser de
+otro color. El detector busca ese amarillo, descarta las manos (manchas pequeñas bajo una cabeza) y separa las cabezas
+que se tocan. No necesita modelo ni entrenamiento y tarda unos 10 ms por imagen. Cada cabeza se ubica en su silla,
+puesto de pie o zona de puerta a la altura de la cabeza (39 mm); lo que se ve por una ventana o por una puerta queda
+fuera de la cabina y no cuenta.
+
+**Simulación 3D (`EDGE_CAMERAS=front=sim,rear=sim`).** Sin cámaras, el agente dibuja la maqueta en 3D desde la pose
+de cada cámara: carrocería de MDF, 14 ventanas, las dos puertas, 41 sillas y una figura amarilla por cada persona que
+marca el contador de puertas. El mapa de puestos sale de la misma pose, así que no hay que calibrar. La imagen se
+queda dentro del proceso, como la de una cámara real; al servicio solo llegan conteos e identificadores.
+
+```powershell
+$env:PYTHONPATH = "src"
+.venv\Scripts\python.exe -m bus_edge preview --camera front --people 30   # vista_front.png: puestos, puertas, ventanas y cabezas
+.venv\Scripts\python.exe -m bus_edge layout --projected --force          # mapa de puestos desde la pose de las cámaras
+```
+
+Medido en la simulación, de 0 a 49 figuras: **todas las posiciones reconocidas sin error** con la lente a 160 mm
+(el arco sobre separadores de 45 mm, piezas `SEPARADOR ARCO` del plano de corte) e inclinada 45°. Con el arco sobre
+las paredes (112 mm) las cabezas de las filas lejanas se superponen y fallaba una de cada cuatro posiciones. Con
+cámaras reales falta comprobar la luz y los umbrales (`EDGE_LEGO_HSV`) y ajustar el mapa con `calibrate`.
+
+### Modelo YOLO (opcional, `EDGE_DETECTOR=yolo`)
 
 Exporte YOLOv8n a ONNX una vez (`imgsz=640` para el portátil) y copie `yolov8n.onnx` a `models/` (instrucciones y
 licencia en [`models/README.md`](models/README.md)). Si el modelo se exportó con otro tamaño, el agente usa el del
@@ -157,9 +182,9 @@ un lote y el estado vivo del bus refleja el conteo de puertas.
 * Con dos FC-51 por puerta el sentido sale del orden de los haces, en las dos puertas. Dos personas que cruzan
   pegadas sin dejar libres los haces cuentan como una; lo corrige la fusión con las cámaras (RF-6.5). La
   separación de 15–25 mm y la espera de 400 ms entre cruces **no se han probado con la maqueta real**.
-* YOLOv8n viene entrenado con fotos de personas reales. Con las minifiguras de Lego puede fallar: pruebe primero
-  con `check` y con la calibración a la vista; si detecta mal, hace falta el conjunto de datos propio y el
-  reentrenamiento que describen RF-12.1 y RF-12.2.
+* El detector de figuras amarillas se probó con la simulación 3D, no con cámaras reales: la luz, los reflejos y la
+  lente cambian los colores (ajuste `EDGE_LEGO_HSV`). Solo sirve para la maqueta: una persona real no tiene la
+  cabeza amarilla, y para eso está YOLO (que con minifiguras puede fallar; ver RF-12.1 y RF-12.2).
 * El rendimiento del detector en el portátil no se midió (falta el `.onnx`; en una CPU de servidor: 34 ms por imagen).
   `check` lo mide en cuanto el modelo esté en `models/`.
 * El clasificador TinyML de puertas (RF-12.3) no cabe en el UNO; el filtro por tiempos cumple RNF-6.1.
