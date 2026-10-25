@@ -191,6 +191,12 @@ class TestSettings:
         assert calibration_device("front", None, {}) == 0  # nothing configured: the old default
         assert calibration_device("front", "3", laptop) == 3 and calibration_device("rear", "v.mp4", {}) == "v.mp4"
 
+    def test_the_example_configuration_is_valid_for_the_laptop(self) -> None:
+        values = load_env_file(Path(__file__).resolve().parents[1] / "deploy" / "edge.env.example")
+        settings = EdgeSettings.from_env({**values, "EDGE_INGEST_KEY": KEY})
+        assert settings.camera_devices() == {"front": 1, "rear": 2} and settings.model_input == 640
+        assert settings.serial_port == "auto" and settings.gps == "replay"
+
     def test_private_addresses_may_use_http_and_the_key_can_come_from_a_file(self, tmp_path: Path) -> None:
         secret = tmp_path / "key"
         secret.write_text(KEY + "\n")
