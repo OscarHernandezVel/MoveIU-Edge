@@ -11,7 +11,7 @@ import pytest
 from bus_edge.calibrate import Calibrator
 from bus_edge.gps.nmea import parse_rmc
 from bus_edge.gps.sources import NmeaSerialGps, Polyline, RouteReplayGps, TerminalDetector, haversine_m, load_route
-from bus_edge.vision.cameras import CameraWorker, usable
+from bus_edge.vision.cameras import CameraWorker, OpenCvCamera, usable
 from bus_edge.vision.detector import Detection, NullDetector, decode_yolov8, letterbox, nms
 from bus_edge.vision.layout import BusLayout, Kind, Position, load_layout, maqueta_layout, point_in_polygon
 from bus_edge.vision.occupancy import DOOR_DWELL_S, CameraObservation, OccupancyEstimator
@@ -234,6 +234,18 @@ class TestDetector:
     def test_nms_keeps_the_best_of_overlapping_boxes(self) -> None:
         boxes = np.array([[0, 0, 10, 10], [1, 1, 11, 11], [50, 50, 60, 60]], dtype=np.float32)
         assert nms(boxes, np.array([0.5, 0.9, 0.7]), 0.5) == [1, 2]
+
+    def test_a_recorded_video_plays_in_a_loop_instead_of_a_camera(self, tmp_path: Path) -> None:
+        cv2 = pytest.importorskip("cv2")
+        video = tmp_path / "frente.avi"
+        writer = cv2.VideoWriter(str(video), cv2.VideoWriter_fourcc(*"MJPG"), 5, (64, 48))
+        for brightness in (60, 120, 180):
+            writer.write(np.full((48, 64, 3), brightness, dtype=np.uint8))
+        writer.release()
+        camera = OpenCvCamera(str(video))
+        frames = [camera.read() for _ in range(7)]  # 3 frames, read 7 times: it starts over twice
+        camera.close()
+        assert all(frame is not None and usable(frame) for frame in frames)
 
 
 # ------------------------------------------------------------ camera worker

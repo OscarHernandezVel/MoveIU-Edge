@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 import time
 from collections.abc import Mapping
 from pathlib import Path
@@ -58,20 +59,31 @@ def _cameras() -> None:
     except ImportError:
         print("  OpenCV no está instalado: pip install -r requirements.txt")
         return
+    from bus_edge.vision.cameras import open_capture
+
     found = 0
     for index in range(5):
-        capture = cv2.VideoCapture(index)
+        capture = open_capture(index)  # as the agent opens them, so the indices printed here are the ones to use
         if not capture.isOpened():
             continue
         ok, frame = capture.read()
         if ok:
             found += 1
             height, width = frame.shape[:2]
-            print(f"  cámara {index}: {width}x{height}, brillo medio {frame.mean():.0f} (útil entre 20 y 235)")
+            codec = int(capture.get(cv2.CAP_PROP_FOURCC)).to_bytes(4, "little").decode("ascii", "replace")
+            print(
+                f"  cámara {index}: {width}x{height} {codec}, brillo medio {frame.mean():.0f} (útil entre 20 y 235)"
+                + ("  <- integrada del portátil?" if index == 0 and sys.platform == "win32" else "")
+            )
         del frame
         capture.release()
     if not found:
-        print("  No se encontró ninguna cámara (Linux: ls /dev/video*; revise el cable y la alimentación USB).")
+        print("  No se encontró ninguna cámara. Revise el cable y la alimentación USB.")
+    if sys.platform == "win32":
+        print("  Windows: las webcams USB suelen ser 1 y 2 (EDGE_CAMERAS=front=1,rear=2). Si falta alguna, revise")
+        print("  Configuración > Privacidad y seguridad > Cámara > 'Permitir que las aplicaciones de escritorio...'.")
+    elif not found:
+        print("  Linux: ls /dev/video*")
 
 
 def _model(path: str) -> None:
@@ -102,7 +114,12 @@ def run_check(values: Mapping[str, str]) -> int:
         try:
             _arduino_lines(port)
         except Exception as error:  # noqa: BLE001 - report and continue with the other checks
-            print(f"  No se pudo abrir {port}: {error} (Linux: ¿el usuario está en el grupo dialout?)")
+            hint = (
+                "Windows: cierre el Monitor serie del Arduino IDE, que ocupa el puerto"
+                if sys.platform == "win32"
+                else "Linux: ¿el usuario está en el grupo dialout?"
+            )
+            print(f"  No se pudo abrir {port}: {error} ({hint})")
     else:
         print("  Sin Arduino.")
     print("3. Cámaras")

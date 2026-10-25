@@ -11,6 +11,7 @@ A frame is *usable* only if it exists and is not too dark or washed out (mean br
 from __future__ import annotations
 
 import logging
+import sys
 import threading
 import time
 from collections.abc import Callable
@@ -30,20 +31,39 @@ def usable(frame: Any) -> bool:
     return MIN_BRIGHTNESS <= mean <= MAX_BRIGHTNESS
 
 
+def open_capture(device: int | str, width: int = 640, height: int = 480) -> Any:
+    """A webcam (its index, or ``/dev/videoN`` on Linux) or a recorded video, opened the same way by the agent, the
+    hardware check and the calibration tool: the polygons are drawn on exactly the image the detector sees.
+
+    Low resolution on purpose: 640x480 is plenty for a 72 cm model. MJPEG keeps two webcams within the bandwidth of
+    the USB ports. On Windows DirectShow is used: the default backend (Media Foundation) takes seconds to open a
+    camera and ignores the buffer size, and the indices it gives can differ from the ones ``check`` printed."""
+    import cv2
+
+    if not isinstance(device, int):
+        return cv2.VideoCapture(device)  # a video file (or a device path): it keeps its own format
+    capture = cv2.VideoCapture(device, cv2.CAP_DSHOW) if sys.platform == "win32" else cv2.VideoCapture(device)
+    capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))  # before the size: DirectShow needs it first
+    capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+    capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # always the newest frame, never a stale queue
+    return capture
+
+
 class OpenCvCamera:
-    """A USB webcam (``/dev/videoN`` or its index). Low resolution on purpose: 640x480 is plenty for a
-    60 cm model and keeps the Raspberry's USB bandwidth for two cameras."""
+    """A USB webcam, or a recorded video played in a loop (to rehearse without the cameras)."""
 
     def __init__(self, device: int | str, width: int = 640, height: int = 480) -> None:
-        import cv2
-
-        self._capture = cv2.VideoCapture(device)
-        self._capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        self._capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-        self._capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # always the newest frame, never a stale queue
+        self._capture = open_capture(device, width, height)
+        self._is_file = not isinstance(device, int)
 
     def read(self) -> Any:
         ok, frame = self._capture.read()
+        if not ok and self._is_file:  # end of the video: start over
+            import cv2
+
+            self._capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            ok, frame = self._capture.read()
         return frame if ok else None
 
     def close(self) -> None:

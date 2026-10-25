@@ -125,7 +125,9 @@ def run(layout_path: str, camera: str, device: int | str, bus_id: str = "2101") 
     path = Path(layout_path)
     layout = load_layout(path) if path.exists() else maqueta_layout(bus_id)
     session = Calibrator(layout, camera)
-    capture = cv2.VideoCapture(device)
+    from bus_edge.vision.cameras import open_capture
+
+    capture = open_capture(device)  # the same 640x480 image the agent will see
     if not capture.isOpened():
         print(f"No se pudo abrir la cámara {device}.")
         return 1
