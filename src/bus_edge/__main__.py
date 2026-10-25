@@ -53,13 +53,14 @@ def cmd_doors(args: argparse.Namespace) -> int:
     values.setdefault("EDGE_INGEST_KEY", "not-needed-here")
     link = build_doors(EdgeSettings.from_env(values))
     link.start()
-    print("Pase la mano frente a cada FC-51. Delantero = sube, trasero = baja. Ctrl+C para salir.")
+    print("Cruce cada puerta con la mano: exterior -> interior = sube, interior -> exterior = baja. Ctrl+C para salir.")
     try:
         while True:
             s = link.snapshot()
             health = "OK" if s.healthy(time.monotonic()) else "SIN SEÑAL"
             print(
                 f"\rArduino {health} | subieron {s.boarded:3d} | bajaron {s.alighted:3d} | a bordo {s.on_board:3d} "
+                f"| del +{s.front_in}/-{s.front_out} tra +{s.rear_in}/-{s.rear_out} | abortados {s.aborted} "
                 f"| obstruida del/tra {int(s.front_obstructed)}/{int(s.rear_obstructed)} "
                 f"| líneas perdidas {s.lost_lines} corruptas {s.corrupted_lines}   ",
                 end="",
